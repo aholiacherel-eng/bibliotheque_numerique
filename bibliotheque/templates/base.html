@@ -1,0 +1,221 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}BiblioNumérique{% endblock %}</title>
+
+  <!-- ✅ Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink:    '#1a1612',
+            cream:  '#faf7f2',
+            warm:   '#f0ebe0',
+            accent: '#b5451b',
+            gold:   '#c9a84c',
+          },
+          fontFamily: {
+            display: ['"Playfair Display"', 'Georgia', 'serif'],
+            body:    ['"DM Sans"', 'system-ui', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'DM Sans', system-ui, sans-serif; }
+    h1,h2,h3,h4 { font-family: 'Playfair Display', Georgia, serif; }
+
+    /* Dropdown profil — CSS pur avec délai */
+    .profile-wrap .profile-dropdown {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 8px);
+      width: 176px;
+      background: white;
+      border: 1px solid #e7e5e4;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,.12);
+      overflow: hidden;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      /* Invisible par défaut */
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-6px);
+      transition: opacity .15s ease, transform .15s ease;
+      /* Délai de fermeture : 400ms */
+      transition-delay: 0s;
+    }
+
+    .profile-wrap:hover .profile-dropdown {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+      /* Ouverture instantanée */
+      transition-delay: 0s;
+    }
+
+    /* Le délai se déclenche quand on quitte le .profile-wrap */
+    .profile-wrap .profile-dropdown {
+      transition-delay: 400ms;
+    }
+    .profile-wrap:hover .profile-dropdown {
+      transition-delay: 0ms;
+    }
+
+    .profile-dropdown a,
+    .profile-dropdown button {
+      display: block;
+      width: 100%;
+      padding: 12px 16px;
+      font-size: .875rem;
+      color: #57534e;
+      text-decoration: none;
+      text-align: left;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      transition: background .15s;
+    }
+    .profile-dropdown a:hover,
+    .profile-dropdown button:hover {
+      background: #f0ebe0;
+    }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-[#faf7f2] text-[#1a1612] min-h-screen flex flex-col">
+
+  <!-- ░░ NAVBAR ░░ -->
+  <nav class="sticky top-0 z-50 bg-[#faf7f2]/90 backdrop-blur border-b border-stone-200 h-16">
+    <div class="max-w-7xl mx-auto px-4 h-full flex items-center gap-6">
+
+      <a href="{% url 'catalogue:accueil' %}" class="flex items-center gap-2 shrink-0">
+        <span class="text-[#b5451b] text-2xl"></span>
+        <span style="font-family:'Playfair Display',serif;" class="font-bold text-lg">
+          Biblio<em class="text-[#b5451b]">Num</em>
+        </span>
+      </a>
+
+      <!-- Recherche desktop -->
+      <form class="flex-1 max-w-md relative hidden md:flex items-center"
+            action="{% url 'recherche:recherche' %}" method="get" autocomplete="off">
+        <input type="text" name="q" id="search-input" value="{{ request.GET.q }}"
+               placeholder="Titre, auteur, ISBN…"
+               class="w-full py-2 pl-4 pr-10 rounded-full border border-stone-200 bg-white text-sm focus:outline-none focus:border-[#b5451b] focus:ring-2 focus:ring-[#b5451b]/20 transition-all" />
+        <button type="submit" class="absolute right-3 text-[#b5451b] font-bold">→</button>
+        <div id="search-suggestions"
+             class="hidden absolute top-full mt-2 left-0 right-0 bg-white border border-stone-200 rounded-2xl shadow-xl z-50 overflow-hidden"></div>
+      </form>
+
+      <!-- Liens desktop -->
+      <ul class="hidden md:flex items-center gap-5 ml-auto shrink-0">
+        <li><a href="{% url 'catalogue:liste_livres' %}"     class="text-sm text-stone-500 hover:text-[#b5451b] transition-colors">Catalogue</a></li>
+        <li><a href="{% url 'catalogue:liste_categories' %}" class="text-sm text-stone-500 hover:text-[#b5451b] transition-colors">Catégories</a></li>
+        <li><a href="{% url 'catalogue:liste_auteurs' %}"    class="text-sm text-stone-500 hover:text-[#b5451b] transition-colors">Auteurs</a></li>
+
+        {% if user.is_authenticated %}
+        <li style="position:relative;" class="profile-wrap">
+          <div class="w-9 h-9 rounded-full bg-[#b5451b] text-white font-bold text-sm flex items-center justify-center cursor-pointer select-none">
+            {{ user.username|first|upper }}
+          </div>
+          <div class="profile-dropdown">
+            <a href="{% url 'accounts:tableau_de_bord' %}">Mon espace</a>
+            <a href="{% url 'accounts:profil' %}">Profil</a>
+            <form method="post" action="{% url 'accounts:deconnexion' %}">
+              {% csrf_token %}
+              <button type="submit">Déconnexion</button>
+            </form>
+          </div>
+        </li>
+        {% else %}
+        <li><a href="{% url 'accounts:connexion' %}"   class="text-sm px-4 py-2 rounded-full border border-stone-200 hover:border-[#b5451b] hover:text-[#b5451b] transition-colors">Connexion</a></li>
+        <li><a href="{% url 'accounts:inscription' %}" class="text-sm px-4 py-2 rounded-full bg-[#b5451b] text-white hover:bg-[#962f0e] transition-colors">S'inscrire</a></li>
+        {% endif %}
+      </ul>
+
+      <!-- Burger mobile -->
+      <button id="burger" class="md:hidden ml-auto p-2 flex flex-col gap-1.5" aria-label="Menu">
+        <span class="w-6 h-0.5 bg-[#1a1612] block transition-all duration-300" id="b1"></span>
+        <span class="w-6 h-0.5 bg-[#1a1612] block transition-all duration-300" id="b2"></span>
+        <span class="w-6 h-0.5 bg-[#1a1612] block transition-all duration-300" id="b3"></span>
+      </button>
+    </div>
+
+    <!-- Menu mobile -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-stone-100 px-4 pb-4">
+      <a href="{% url 'catalogue:liste_livres' %}"     class="block py-3 text-sm border-b border-stone-100">Catalogue</a>
+      <a href="{% url 'catalogue:liste_categories' %}" class="block py-3 text-sm border-b border-stone-100">Catégories</a>
+      <a href="{% url 'catalogue:liste_auteurs' %}"    class="block py-3 text-sm border-b border-stone-100">Auteurs</a>
+      {% if user.is_authenticated %}
+      <a href="{% url 'accounts:tableau_de_bord' %}"   class="block py-3 text-sm">Mon espace</a>
+      {% else %}
+      <a href="{% url 'accounts:connexion' %}"         class="block py-3 text-sm">Connexion</a>
+      <a href="{% url 'accounts:inscription' %}"       class="block py-3 text-sm text-[#b5451b] font-medium">S'inscrire</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- ░░ MESSAGES FLASH ░░ -->
+  {% if messages %}
+  <div class="fixed top-20 right-4 z-50 flex flex-col gap-2 max-w-sm">
+    {% for message in messages %}
+    <div class="flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm
+      {% if message.tags == 'success' %}bg-green-50 text-green-800 border-l-4 border-green-500
+      {% elif message.tags == 'error' or message.tags == 'danger' %}bg-red-50 text-red-800 border-l-4 border-[#b5451b]
+      {% else %}bg-blue-50 text-blue-800 border-l-4 border-blue-400{% endif %}">
+      <span>{{ message }}</span>
+      <button onclick="this.parentElement.remove()" class="ml-auto opacity-40 hover:opacity-100 text-base">✕</button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ░░ CONTENU ░░ -->
+  <main class="flex-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ░░ FOOTER ░░ -->
+  <footer class="bg-[#1a1612] text-stone-400">
+    <div class="max-w-7xl mx-auto px-4 py-16 grid grid-cols-1 md:grid-cols-3 gap-10">
+      <div>
+        <div class="text-[#c9a84c] text-3xl mb-4">◈</div>
+        <p class="text-sm leading-relaxed">BiblioNumérique — La connaissance accessible à tous.</p>
+      </div>
+      <div>
+        <h4 style="font-family:'Playfair Display',serif;" class="text-white text-lg mb-4">Découvrir</h4>
+        <a href="{% url 'catalogue:liste_livres' %}"     class="block text-sm mb-2 hover:text-[#c9a84c] transition-colors">Catalogue</a>
+        <a href="{% url 'catalogue:liste_categories' %}" class="block text-sm mb-2 hover:text-[#c9a84c] transition-colors">Catégories</a>
+        <a href="{% url 'catalogue:liste_auteurs' %}"    class="block text-sm hover:text-[#c9a84c] transition-colors">Auteurs</a>
+      </div>
+      <div>
+        <h4 style="font-family:'Playfair Display',serif;" class="text-white text-lg mb-4">Mon compte</h4>
+        {% if user.is_authenticated %}
+        <a href="{% url 'accounts:tableau_de_bord' %}" class="block text-sm mb-2 hover:text-[#c9a84c] transition-colors">Tableau de bord</a>
+        <a href="{% url 'accounts:profil' %}"          class="block text-sm hover:text-[#c9a84c] transition-colors">Profil</a>
+        {% else %}
+        <a href="{% url 'accounts:connexion' %}"   class="block text-sm mb-2 hover:text-[#c9a84c] transition-colors">Connexion</a>
+        <a href="{% url 'accounts:inscription' %}" class="block text-sm hover:text-[#c9a84c] transition-colors">Inscription</a>
+        {% endif %}
+      </div>
+    </div>
+    <div class="border-t border-white/10 py-4 text-center text-xs text-stone-600">
+      © 2025 BiblioNumérique. Tous droits réservés.
+    </div>
+  </footer>
+
+  <script src="{% static 'js/main.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

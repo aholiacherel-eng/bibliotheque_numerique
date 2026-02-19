@@ -1,0 +1,33 @@
+<a href="{% url 'catalogue:detail_livre' livre.slug %}" class="group flex flex-col">
+  <!-- Couverture -->
+  <div class="aspect-[2/3] rounded-sm shadow-md overflow-hidden mb-3 relative bg-[#f0ebe0]"
+       style="box-shadow:4px 4px 12px rgba(26,22,18,.15), inset -3px 0 0 rgba(0,0,0,.08);">
+    {% if livre.couverture %}
+      <img src="{{ livre.couverture.url }}" alt="{{ livre.titre }}"
+           class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+    {% else %}
+      <div class="w-full h-full flex items-center justify-center p-4 text-center text-stone-400 text-sm italic"
+           style="font-family:'Playfair Display',serif; background:linear-gradient(145deg,#f0ebe0,#e2dbd0);">
+        {{ livre.titre }}
+      </div>
+    {% endif %}
+    <span class="absolute bottom-2 right-2 bg-[#1a1612]/75 text-[#faf7f2] text-[10px] font-semibold uppercase px-2 py-0.5 rounded backdrop-blur-sm">
+      {{ livre.format }}
+    </span>
+  </div>
+  <!-- Infos -->
+  <div class="flex-1">
+    <div class="font-semibold text-sm leading-snug line-clamp-2 mb-1 group-hover:text-[#b5451b] transition-colors"
+         style="font-family:'Playfair Display',serif;">
+      {{ livre.titre }}
+    </div>
+    <div class="text-xs text-stone-400">{{ livre.auteurs_str }}</div>
+    {% if livre.note_moyenne %}
+    <div class="flex items-center gap-1 mt-1 text-xs">
+      <span class="text-[#c9a84c]">★</span>
+      <span class="font-medium">{{ livre.note_moyenne }}</span>
+      <span class="text-stone-400">({{ livre.avis.count }})</span>
+    </div>
+    {% endif %}
+  </div>
+</a>

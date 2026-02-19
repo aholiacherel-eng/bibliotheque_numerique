@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% block title %}{{ livre.titre }} — BiblioNumérique{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-12">
+
+  <!-- ░░ EN-TÊTE ░░ -->
+  <div class="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-12 mb-16">
+
+    <!-- Couverture -->
+    <div class="aspect-[2/3] max-w-[280px] rounded shadow-2xl overflow-hidden"
+         style="box-shadow:8px 8px 40px rgba(26,22,18,.2), inset -5px 0 0 rgba(0,0,0,.1);">
+      {% if livre.couverture %}
+        <img src="{{ livre.couverture.url }}" alt="{{ livre.titre }}" class="w-full h-full object-cover" />
+      {% else %}
+        <div class="w-full h-full flex items-center justify-center p-8 text-center text-stone-400 italic text-lg"
+             style="font-family:'Playfair Display',serif; background:linear-gradient(145deg,#f0ebe0,#e2dbd0);">
+          {{ livre.titre }}
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Infos -->
+    <div>
+      <!-- Chips -->
+      <div class="flex flex-wrap gap-2 mb-4">
+        {% for cat in livre.categories.all %}
+        <a href="{% url 'catalogue:livres_categorie' cat.slug %}"
+           class="px-3 py-1 rounded-full text-xs bg-[#f0ebe0] border border-stone-200 text-stone-600 hover:border-[#b5451b] transition-colors">
+          {{ cat.nom }}
+        </a>
+        {% endfor %}
+        <span class="px-3 py-1 rounded-full text-xs bg-[#b5451b]/10 text-[#b5451b] border border-[#b5451b]/20">
+          {{ livre.get_format_display }}
+        </span>
+      </div>
+
+      <h1 class="text-4xl md:text-5xl font-bold leading-tight mb-2">{{ livre.titre }}</h1>
+      {% if livre.sous_titre %}
+      <p class="text-stone-400 italic text-lg mb-4">{{ livre.sous_titre }}</p>
+      {% endif %}
+
+      <div class="text-[#b5451b] italic text-xl mb-4">
+        {% for auteur in livre.auteurs.all %}
+          <a href="{% url 'catalogue:detail_auteur' auteur.slug %}" class="hover:underline">{{ auteur.nom_complet }}</a>{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+      </div>
+
+      {% if livre.note_moyenne %}
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-[#c9a84c] text-2xl">★★★★★</span>
+        <strong class="text-lg">{{ livre.note_moyenne }} / 5</strong>
+        <span class="text-stone-400 text-sm">({{ livre.avis.count }} avis)</span>
+      </div>
+      {% endif %}
+
+      <p class="text-stone-600 leading-relaxed mb-8 max-w-2xl">{{ livre.description }}</p>
+
+      <!-- Actions -->
+      <div class="flex gap-3 flex-wrap mb-8">
+        {% if user.is_authenticated %}
+        <a href="{% url 'lecture:lire_livre' livre.slug %}"
+           class="px-6 py-3 rounded-full bg-[#b5451b] text-white font-medium hover:bg-[#962f0e] transition-colors">
+           Lire en ligne
+        </a>
+        <button id="favori-btn" data-url="{% url 'lecture:toggle_favori' livre.slug %}"
+                class="px-6 py-3 rounded-full border border-stone-200 hover:border-[#b5451b] transition-colors text-sm font-medium">
+          {{ en_favori|yesno:"❤️ Favori,🤍 Ajouter aux favoris" }}
+        </button>
+        {% else %}
+        <a href="{% url 'accounts:connexion' %}?next={{ request.path }}"
+           class="px-6 py-3 rounded-full bg-[#b5451b] text-white font-medium hover:bg-[#962f0e] transition-colors">
+          Connexion pour lire
+        </a>
+        {% endif %}
+      </div>
+
+      <!-- Fiche technique -->
+      <div class="bg-white border border-stone-200 rounded-2xl p-5 grid grid-cols-2 gap-4">
+        {% if livre.date_publication %}
+        <div><div class="text-xs uppercase tracking-wider text-stone-400 mb-1">Publication</div><div class="font-medium">{{ livre.date_publication|date:"Y" }}</div></div>
+        {% endif %}
+        {% if livre.nombre_pages %}
+        <div><div class="text-xs uppercase tracking-wider text-stone-400 mb-1">Pages</div><div class="font-medium">{{ livre.nombre_pages }}</div></div>
+        {% endif %}
+        {% if livre.langue %}
+        <div><div class="text-xs uppercase tracking-wider text-stone-400 mb-1">Langue</div><div class="font-medium">{{ livre.langue.nom }}</div></div>
+        {% endif %}
+        {% if livre.editeur %}
+        <div><div class="text-xs uppercase tracking-wider text-stone-400 mb-1">Éditeur</div><div class="font-medium">{{ livre.editeur.nom }}</div></div>
+        {% endif %}
+        {% if livre.isbn %}
+        <div><div class="text-xs uppercase tracking-wider text-stone-400 mb-1">ISBN</div><div class="font-medium">{{ livre.isbn }}</div></div>
+        {% endif %}
+        <div><div class="text-xs uppercase tracking-wider text-stone-400 mb-1">Lectures</div><div class="font-medium">{{ livre.nombre_lectures }}</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ░░ LIVRES SIMILAIRES ░░ -->
+  {% if livres_similaires %}
+  <section class="mb-16">
+    <div class="flex items-baseline justify-between mb-6 pb-4 border-b border-stone-200">
+      <h2 class="text-2xl italic">Vous aimerez aussi</h2>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+      {% for l in livres_similaires %}
+        {% include 'catalogue/_book_card.html' with livre=l %}
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ░░ AVIS ░░ -->
+  <section>
+    <div class="flex items-baseline justify-between mb-6 pb-4 border-b border-stone-200">
+      <h2 class="text-2xl italic">Avis des lecteurs</h2>
+      <span class="text-sm text-stone-400">{{ avis.count }} avis</span>
+    </div>
+
+    <!-- Formulaire avis -->
+    {% if user.is_authenticated %}
+    <div class="bg-white border border-stone-200 rounded-2xl p-6 mb-8">
+      <h3 class="font-semibold text-lg mb-4">Laisser un avis</h3>
+      <form method="post" action="{% url 'catalogue:ajouter_avis' livre.slug %}">
+        {% csrf_token %}
+        <!-- Étoiles -->
+        <div class="flex flex-row-reverse justify-end gap-1 mb-4" id="star-group">
+          {% for i in "54321" %}
+          <input type="radio" name="note" id="star{{ i }}" value="{{ i }}" class="hidden peer/star{{ i }}" />
+          <label for="star{{ i }}" class="text-3xl text-stone-200 cursor-pointer peer-checked/star{{ i }}:text-[#c9a84c] hover:text-[#c9a84c] transition-colors">★</label>
+          {% endfor %}
+        </div>
+        <div class="mb-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2">Commentaire (optionnel)</label>
+          <textarea name="commentaire" rows="3" placeholder="Partagez votre expérience…"
+                    class="w-full px-4 py-3 border border-stone-200 rounded-xl text-sm resize-none focus:outline-none focus:border-[#b5451b] transition-colors bg-[#faf7f2]"></textarea>
+        </div>
+        <button type="submit"
+                class="px-5 py-2.5 rounded-full bg-[#b5451b] text-white text-sm font-medium hover:bg-[#962f0e] transition-colors">
+          Publier l'avis
+        </button>
+      </form>
+    </div>
+    {% endif %}
+
+    <!-- Liste avis -->
+    <div class="space-y-4">
+      {% for a in avis %}
+      <div class="bg-white border border-stone-200 rounded-2xl p-5">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-full bg-[#f0ebe0] flex items-center justify-center font-bold text-stone-600 shrink-0">
+            {{ a.utilisateur.username|first|upper }}
+          </div>
+          <div>
+            <div class="font-semibold text-sm">{{ a.utilisateur.username }}</div>
+            <div class="text-xs text-stone-400">{{ a.date_creation|date:"d F Y" }}</div>
+          </div>
+          <div class="ml-auto text-[#c9a84c]">
+            {% for i in "12345" %}{% if forloop.counter <= a.note %}★{% else %}<span class="text-stone-200">★</span>{% endif %}{% endfor %}
+          </div>
+        </div>
+        {% if a.commentaire %}
+        <p class="text-stone-600 text-sm leading-relaxed">{{ a.commentaire }}</p>
+        {% endif %}
+      </div>
+      {% empty %}
+      <div class="text-center py-12 text-stone-400">
+        <p class="text-4xl mb-3"></p>
+        <p>Aucun avis pour l'instant. Soyez le premier !</p>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('favori-btn')?.addEventListener('click', async function() {
+  const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+  const res  = await fetch(this.dataset.url, { method:'POST', headers:{'X-CSRFToken': csrf} });
+  const data = await res.json();
+  this.textContent = data.statut === 'ajoute' ? '❤️ Favori' : '🤍 Ajouter aux favoris';
+});
+</script>
+{% endblock %}

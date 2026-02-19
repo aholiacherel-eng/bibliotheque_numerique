@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Recherche{% if q %} : {{ q }}{% endif %} — BiblioNumérique{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-10">
+
+  <!-- Barre de recherche -->
+  <div class="bg-[#f0ebe0] rounded-3xl p-8 mb-10 text-center">
+    <h1 class="text-3xl italic mb-6">Rechercher un livre</h1>
+    <form class="flex gap-3 max-w-xl mx-auto" method="get">
+      <input type="text" name="q" value="{{ q }}" placeholder="Titre, auteur, ISBN…" autofocus
+             class="flex-1 px-5 py-3 rounded-full border-2 border-stone-200 text-sm bg-white focus:outline-none focus:border-[#b5451b] transition-colors" />
+      <button type="submit"
+              class="px-6 py-3 rounded-full bg-[#b5451b] text-white font-medium hover:bg-[#962f0e] transition-colors">
+        Rechercher
+      </button>
+    </form>
+  </div>
+
+  {% if q %}
+  <p class="text-sm text-stone-400 mb-6">
+    <strong class="text-[#1a1612]">{{ total }}</strong>
+    résultat{{ total|pluralize }} pour « <strong>{{ q }}</strong> »
+  </p>
+  {% endif %}
+
+  <!-- Filtres catégories -->
+  <div class="flex gap-2 flex-wrap mb-8">
+    <a href="?q={{ q }}"
+       class="px-3 py-1.5 text-xs rounded-full border transition-colors {% if not request.GET.categorie %}bg-[#b5451b] text-white border-[#b5451b]{% else %}border-stone-200 hover:border-[#b5451b]{% endif %}">
+      Toutes
+    </a>
+    {% for cat in categories %}
+    <a href="?q={{ q }}&categorie={{ cat.slug }}"
+       class="px-3 py-1.5 text-xs rounded-full border transition-colors {% if request.GET.categorie == cat.slug %}bg-[#b5451b] text-white border-[#b5451b]{% else %}border-stone-200 hover:border-[#b5451b]{% endif %}">
+      {{ cat.nom }}
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Résultats -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+    {% for livre in livres %}
+      {% include 'catalogue/_book_card.html' %}
+    {% empty %}
+    <div class="col-span-full text-center py-20 text-stone-400">
+      {% if q %}
+      <p class="text-5xl mb-4"></p>
+      <p class="text-lg">Aucun résultat pour « {{ q }} »</p>
+      <p class="text-sm mt-2">Essayez d'autres mots-clés ou
+        <a href="{% url 'catalogue:liste_livres' %}" class="text-[#b5451b] hover:underline">parcourez le catalogue →</a>
+      </p>
+      {% else %}
+      <p>Entrez un mot-clé pour commencer votre recherche.</p>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

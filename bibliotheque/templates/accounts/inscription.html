@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Inscription — BiblioNumérique{% endblock %}
+
+{% block content %}
+<div class="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-[#f0ebe0] px-4 py-12">
+  <div class="bg-white border border-stone-200 rounded-3xl p-8 w-full max-w-md shadow-xl">
+    <h1 class="text-3xl italic mb-1">Rejoindre<br>BiblioNumérique</h1>
+    <p class="text-stone-400 text-sm mb-8">Créez votre compte gratuit en quelques secondes.</p>
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="mb-5">
+        <label for="{{ field.id_for_label }}"
+               class="block text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2">
+          {{ field.label }}
+        </label>
+        <!-- On ré-applique les classes Tailwind sur le widget -->
+        <div class="[&>input]:w-full [&>input]:px-4 [&>input]:py-2.5 [&>input]:border [&>input]:border-stone-200 [&>input]:rounded-xl [&>input]:text-sm [&>input]:bg-[#faf7f2] [&>input]:focus:outline-none [&>input]:focus:border-[#b5451b] [&>input]:transition-colors">
+          {{ field }}
+        </div>
+        {% if field.errors %}
+        {% for error in field.errors %}
+        <p class="text-[#b5451b] text-xs mt-1">{{ error }}</p>
+        {% endfor %}
+        {% endif %}
+      </div>
+      {% endfor %}
+
+      <button type="submit"
+              class="w-full py-3 rounded-full bg-[#b5451b] text-white font-medium hover:bg-[#962f0e] transition-colors mt-2">
+        Créer mon compte →
+      </button>
+    </form>
+
+    <p class="text-center text-sm text-stone-400 mt-6">
+      Déjà inscrit ?
+      <a href="{% url 'accounts:connexion' %}" class="text-[#b5451b] font-medium hover:underline">Se connecter</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends 'base.html' %} 
+{% block title %}Mon profil — BiblioNumérique{%endblock %} {% block content %}
+<div class="max-w-7xl mx-auto px-4 py-10 flex gap-8">
+  <!-- Sidebar (même que dashboard) -->
+  <aside class="hidden lg:block w-64 shrink-0">
+    <div class="sticky top-20 space-y-4">
+      <div class="bg-white border border-stone-200 rounded-2xl p-6 text-center">
+        <div
+          class="w-16 h-16 rounded-full bg-[#b5451b] text-white font-bold text-2xl flex items-center justify-center mx-auto mb-3"
+          style="font-family: &quot;Playfair Display&quot;, serif"
+        >
+          {{ utilisateur.username|first|upper }}
+        </div>
+        <div class="font-semibold">
+          {{ utilisateur.get_full_name|default:utilisateur.username }}
+        </div>
+        <div class="text-xs uppercase tracking-wider text-stone-400 mt-1">
+          {{ utilisateur.get_role_display }}
+        </div>
+      </div>
+      <nav class="bg-white border border-stone-200 rounded-2xl overflow-hidden">
+        <a
+          href="{% url 'accounts:tableau_de_bord' %}"
+          class="flex items-center gap-3 px-4 py-3 text-sm text-stone-600 hover:bg-[#f0ebe0] border-b border-stone-100 transition-colors"
+          >Tableau de bord</a
+        >
+        <a
+          href="{% url 'accounts:profil' %}"
+          class="flex items-center gap-3 px-4 py-3 text-sm bg-[#f0ebe0] text-[#b5451b] font-medium border-l-2 border-[#b5451b]"
+          >Mon profil</a
+        >
+      </nav>
+    </div>
+  </aside>
+
+  <!-- Contenu profil -->
+  <div class="flex-1 min-w-0">
+    <div class="flex items-center justify-between mb-8">
+      <h1 class="text-3xl italic">Mon profil</h1>
+      <a
+        href="{% url 'accounts:modifier_profil' %}"
+        class="px-5 py-2 rounded-full border border-stone-200 text-sm hover:border-[#b5451b] hover:text-[#b5451b] transition-colors"
+      >
+        Modifier
+      </a>
+    </div>
+
+    <div class="bg-white border border-stone-200 rounded-2xl p-6 space-y-6">
+      <!-- Avatar -->
+      <div class="flex items-center gap-5 pb-6 border-b border-stone-100">
+        <div
+          class="w-20 h-20 rounded-full overflow-hidden bg-[#f0ebe0] shrink-0"
+        >
+          {% if utilisateur.avatar %}
+          <img
+            src="{{ utilisateur.avatar.url }}"
+            alt=""
+            class="w-full h-full object-cover"
+          />
+          {% else %}
+          <div
+            class="w-full h-full flex items-center justify-center text-3xl font-bold text-stone-300"
+            style="font-family: &quot;Playfair Display&quot;, serif"
+          >
+            {{ utilisateur.username|first|upper }}
+          </div>
+          {% endif %}
+        </div>
+        <div>
+          <div class="text-xl font-semibold">
+            {{ utilisateur.get_full_name|default:utilisateur.username }}
+          </div>
+          <div class="text-stone-400 text-sm">@{{ utilisateur.username }}</div>
+          <div
+            class="mt-1 inline-block px-3 py-0.5 rounded-full text-xs bg-[#b5451b]/10 text-[#b5451b]"
+          >
+            {{ utilisateur.get_role_display }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Infos -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div>
+          <div class="text-xs uppercase tracking-wider text-stone-400 mb-1">
+            Email
+          </div>
+          <div class="font-medium">{{ utilisateur.email|default:"—" }}</div>
+        </div>
+        <div>
+          <div class="text-xs uppercase tracking-wider text-stone-400 mb-1">
+            Membre depuis
+          </div>
+          <div class="font-medium">
+            {{ utilisateur.date_joined|date:"d F Y" }}
+          </div>
+        </div>
+        {% if utilisateur.date_naissance %}
+        <div>
+          <div class="text-xs uppercase tracking-wider text-stone-400 mb-1">
+            Date de naissance
+          </div>
+          <div class="font-medium">
+            {{ utilisateur.date_naissance|date:"d F Y" }}
+          </div>
+        </div>
+        {% endif %}
+        <div>
+          <div class="text-xs uppercase tracking-wider text-stone-400 mb-1">
+            Langue préférée
+          </div>
+          <div class="font-medium">{{ utilisateur.langue_preferee|upper }}</div>
+        </div>
+      </div>
+
+      {% if utilisateur.bio %}
+      <div class="pt-4 border-t border-stone-100">
+        <div class="text-xs uppercase tracking-wider text-stone-400 mb-2">
+          Biographie
+        </div>
+        <p class="text-stone-600 leading-relaxed">{{ utilisateur.bio }}</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

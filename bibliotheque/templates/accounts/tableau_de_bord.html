@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}Mon espace — BiblioNumérique{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-10 flex gap-8">
+
+  <!-- ░░ SIDEBAR ░░ -->
+  <aside class="hidden lg:block w-64 shrink-0">
+    <div class="sticky top-20 space-y-4">
+      <!-- Carte profil -->
+      <div class="bg-white border border-stone-200 rounded-2xl p-6 text-center">
+        <div class="w-16 h-16 rounded-full bg-[#b5451b] text-white font-bold text-2xl flex items-center justify-center mx-auto mb-3"
+             style="font-family:'Playfair Display',serif;">
+          {{ user.username|first|upper }}
+        </div>
+        <div class="font-semibold">{{ user.get_full_name|default:user.username }}</div>
+        <div class="text-xs uppercase tracking-wider text-stone-400 mt-1">{{ user.get_role_display }}</div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="bg-white border border-stone-200 rounded-2xl overflow-hidden">
+        <a href="{% url 'accounts:tableau_de_bord' %}" class="flex items-center gap-3 px-4 py-3 text-sm bg-[#f0ebe0] text-[#b5451b] font-medium border-l-2 border-[#b5451b]">Tableau de bord</a>
+        <a href="{% url 'accounts:profil' %}"          class="flex items-center gap-3 px-4 py-3 text-sm text-stone-600 hover:bg-[#f0ebe0] transition-colors border-b border-stone-100">Mon profil</a>
+        <a href="{% url 'catalogue:liste_livres' %}"   class="flex items-center gap-3 px-4 py-3 text-sm text-stone-600 hover:bg-[#f0ebe0] transition-colors border-b border-stone-100">Catalogue</a>
+        <a href="{% url 'recherche:recherche' %}"      class="flex items-center gap-3 px-4 py-3 text-sm text-stone-600 hover:bg-[#f0ebe0] transition-colors">Recherche</a>
+      </nav>
+
+      <form method="post" action="{% url 'accounts:deconnexion' %}">
+        {% csrf_token %}
+        <button type="submit"
+                class="w-full px-4 py-3 rounded-2xl border border-stone-200 text-sm text-stone-500 hover:bg-red-50 hover:text-red-700 hover:border-red-200 transition-colors text-left">
+          Déconnexion
+        </button>
+      </form>
+    </div>
+  </aside>
+
+  <!-- ░░ CONTENU ░░ -->
+  <div class="flex-1 min-w-0">
+    <h1 class="text-3xl italic mb-8">Bonjour, {{ user.username }}</h1>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+      <div class="bg-white border border-stone-200 rounded-2xl p-5">
+        <div class="text-3xl font-bold text-[#b5451b]" style="font-family:'Playfair Display',serif;">{{ progressions.count }}</div>
+        <div class="text-sm text-stone-400 mt-1">Livres en cours</div>
+      </div>
+      <div class="bg-white border border-stone-200 rounded-2xl p-5">
+        <div class="text-3xl font-bold text-[#b5451b]" style="font-family:'Playfair Display',serif;">{{ favoris.count }}</div>
+        <div class="text-sm text-stone-400 mt-1">Favoris</div>
+      </div>
+      <div class="bg-white border border-stone-200 rounded-2xl p-5">
+        <div class="text-3xl font-bold text-[#b5451b]" style="font-family:'Playfair Display',serif;">{{ historique.count }}</div>
+        <div class="text-sm text-stone-400 mt-1">Sessions de lecture</div>
+      </div>
+    </div>
+
+    <!-- En cours de lecture -->
+    <section class="mb-10">
+      <div class="flex items-baseline justify-between mb-5 pb-3 border-b border-stone-200">
+        <h2 class="text-xl italic">En cours de lecture</h2>
+        <a href="{% url 'catalogue:liste_livres' %}" class="text-sm text-[#b5451b] hover:underline">Trouver un livre →</a>
+      </div>
+      <div class="space-y-4">
+        {% for prog in progressions %}
+        <div class="bg-white border border-stone-200 rounded-2xl p-4 flex gap-4 items-center">
+          <div class="w-14 aspect-[2/3] rounded overflow-hidden shrink-0 bg-[#f0ebe0]">
+            {% if prog.livre.couverture %}
+              <img src="{{ prog.livre.couverture.url }}" alt="" class="w-full h-full object-cover" />
+            {% endif %}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold text-sm truncate">{{ prog.livre.titre }}</div>
+            <div class="text-xs text-stone-400 mb-2">{{ prog.livre.auteurs_str }}</div>
+            <div class="h-1.5 bg-stone-100 rounded-full overflow-hidden">
+              <div class="h-full bg-[#b5451b] rounded-full transition-all" style="width:{{ prog.pourcentage }}%;"></div>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="text-sm font-bold text-[#b5451b]">{{ prog.pourcentage|floatformat:0 }}%</div>
+            <a href="{% url 'lecture:lire_livre' prog.livre.slug %}"
+               class="inline-block mt-2 px-4 py-1.5 rounded-full bg-[#b5451b] text-white text-xs font-medium hover:bg-[#962f0e] transition-colors">
+              Continuer
+            </a>
+          </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-10 text-stone-400">
+          <p>Vous n'avez pas encore commencé de livre.</p>
+          <a href="{% url 'catalogue:liste_livres' %}" class="inline-block mt-3 text-sm text-[#b5451b] hover:underline">Explorer le catalogue →</a>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Favoris -->
+    <section class="mb-10">
+      <div class="flex items-baseline justify-between mb-5 pb-3 border-b border-stone-200">
+        <h2 class="text-xl italic">Mes favoris</h2>
+      </div>
+      <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+        {% for fav in favoris %}
+          {% include 'catalogue/_book_card.html' with livre=fav.livre %}
+        {% empty %}
+          <p class="text-stone-400 text-sm col-span-full">Aucun favori pour l'instant.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Historique -->
+    <section>
+      <div class="mb-5 pb-3 border-b border-stone-200">
+        <h2 class="text-xl italic">Historique de lecture</h2>
+      </div>
+      <div class="bg-white border border-stone-200 rounded-2xl overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-[#f0ebe0]">
+            <tr>
+              <th class="text-left px-5 py-3 font-semibold text-xs uppercase tracking-wider text-stone-400">Livre</th>
+              <th class="text-left px-5 py-3 font-semibold text-xs uppercase tracking-wider text-stone-400">Date</th>
+              <th class="text-left px-5 py-3 font-semibold text-xs uppercase tracking-wider text-stone-400">Durée</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-100">
+            {% for h in historique %}
+            <tr class="hover:bg-[#faf7f2] transition-colors">
+              <td class="px-5 py-3">
+                <a href="{% url 'catalogue:detail_livre' h.livre.slug %}" class="font-medium hover:text-[#b5451b] transition-colors">{{ h.livre.titre }}</a>
+              </td>
+              <td class="px-5 py-3 text-stone-400">{{ h.date_debut|date:"d/m/Y" }}</td>
+              <td class="px-5 py-3 text-stone-400">{{ h.duree_minutes }} min</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="px-5 py-10 text-center text-stone-400">Aucune session de lecture enregistrée.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends 'base.html' %} 
+{% block title %}{{ auteur.nom_complet }} —BiblioNumérique{% endblock %} {% block content %}
+<div class="max-w-7xl mx-auto px-4 py-12">
+  <!-- En-tête auteur -->
+  <div
+    class="flex flex-col md:flex-row gap-8 mb-12 pb-12 border-b border-stone-200"
+  >
+    <!-- Photo -->
+    <div
+      class="w-36 h-36 rounded-full overflow-hidden bg-[#f0ebe0] flex items-center justify-center shrink-0 shadow-lg mx-auto md:mx-0"
+    >
+      {% if auteur.photo %}
+      <img
+        src="{{ auteur.photo.url }}"
+        alt="{{ auteur.nom_complet }}"
+        class="w-full h-full object-cover"
+      />
+      {% else %}
+      <span
+        class="text-5xl font-bold text-stone-300"
+        style="font-family: &quot;Playfair Display&quot;, serif"
+      >
+        {{ auteur.prenom|first }}{{ auteur.nom|first }}
+      </span>
+      {% endif %}
+    </div>
+
+    <!-- Infos -->
+    <div>
+      <h1 class="text-4xl italic mb-2">{{ auteur.nom_complet }}</h1>
+
+      <div class="flex flex-wrap gap-3 text-sm text-stone-400 mb-4">
+        {% if auteur.nationalite %}
+        <span> {{ auteur.nationalite }}</span>
+        {% endif %} {% if auteur.date_naissance %}
+        <span
+          > {{ auteur.date_naissance|date:"Y" }}{% if auteur.date_deces %} —
+          {{ auteur.date_deces|date:"Y" }}{% endif %}</span
+        >
+        {% endif %} {% if auteur.site_web %}
+        <a
+          href="{{ auteur.site_web }}"
+          target="_blank"
+          class="text-[#b5451b] hover:underline"
+          > Site web</a
+        >
+        {% endif %}
+      </div>
+
+      {% if auteur.biographie %}
+      <p class="text-stone-600 leading-relaxed max-w-2xl">
+        {{ auteur.biographie }}
+      </p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Livres de l'auteur -->
+  <div>
+    <div
+      class="flex items-baseline justify-between mb-6 pb-3 border-b border-stone-200"
+    >
+      <h2 class="text-2xl italic">Œuvres</h2>
+      <span class="text-sm text-stone-400"
+        >{{ livres.count }} livre{{ livres.count|pluralize }}</span
+      >
+    </div>
+
+    <div
+      class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"
+    >
+      {% for livre in livres %} {% include 'catalogue/_book_card.html' %} {%
+      empty %}
+      <p class="text-stone-400 text-sm col-span-full">
+        Aucun livre disponible pour cet auteur.
+      </p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

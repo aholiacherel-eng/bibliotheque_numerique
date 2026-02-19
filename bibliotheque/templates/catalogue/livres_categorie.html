@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}{{ categorie.nom }} — BiblioNumérique{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-10">
+
+  <!-- Breadcrumb -->
+  <nav class="text-sm text-stone-400 mb-6">
+    <a href="{% url 'catalogue:liste_categories' %}" class="hover:text-[#b5451b] transition-colors">Catégories</a>
+    <span class="mx-2">›</span>
+    <span class="text-[#1a1612] font-medium">{{ categorie.nom }}</span>
+  </nav>
+
+  <div class="flex items-baseline justify-between mb-8 pb-4 border-b border-stone-200">
+    <div class="flex items-center gap-3">
+      <span class="text-4xl">{{ categorie.icone|default:"" }}</span>
+      <div>
+        <h1 class="text-3xl italic">{{ categorie.nom }}</h1>
+        {% if categorie.description %}
+        <p class="text-stone-400 text-sm mt-1">{{ categorie.description }}</p>
+        {% endif %}
+      </div>
+    </div>
+    <span class="text-sm text-stone-400 shrink-0">{{ livres.paginator.count }} livre{{ livres.paginator.count|pluralize }}</span>
+  </div>
+
+  <!-- Sous-catégories -->
+  {% if categorie.sous_categories.exists %}
+  <div class="flex flex-wrap gap-2 mb-8">
+    {% for sous in categorie.sous_categories.all %}
+    <a href="{% url 'catalogue:livres_categorie' sous.slug %}"
+       class="px-4 py-1.5 rounded-full border border-stone-200 text-sm hover:border-[#b5451b] hover:text-[#b5451b] transition-colors">
+      {{ sous.nom }}
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Grille livres -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+    {% for livre in livres %}
+      {% include 'catalogue/_book_card.html' %}
+    {% empty %}
+    <div class="col-span-full text-center py-16 text-stone-400">
+      <p class="text-5xl mb-4"></p>
+      <p>Aucun livre dans cette catégorie pour l'instant.</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if livres.has_other_pages %}
+  <nav class="flex justify-center gap-2 mt-12">
+    {% if livres.has_previous %}
+    <a href="?page={{ livres.previous_page_number }}"
+       class="w-10 h-10 flex items-center justify-center border border-stone-200 rounded-lg text-sm hover:border-[#b5451b] hover:text-[#b5451b] transition-colors">←</a>
+    {% endif %}
+    {% for num in livres.paginator.page_range %}
+      {% if livres.number == num %}
+      <span class="w-10 h-10 flex items-center justify-center bg-[#b5451b] text-white rounded-lg text-sm">{{ num }}</span>
+      {% elif num > livres.number|add:'-3' and num < livres.number|add:'3' %}
+      <a href="?page={{ num }}"
+         class="w-10 h-10 flex items-center justify-center border border-stone-200 rounded-lg text-sm hover:border-[#b5451b] hover:text-[#b5451b] transition-colors">{{ num }}</a>
+      {% endif %}
+    {% endfor %}
+    {% if livres.has_next %}
+    <a href="?page={{ livres.next_page_number }}"
+       class="w-10 h-10 flex items-center justify-center border border-stone-200 rounded-lg text-sm hover:border-[#b5451b] hover:text-[#b5451b] transition-colors">→</a>
+    {% endif %}
+  </nav>
+  {% endif %}
+
+</div>
+{% endblock %}

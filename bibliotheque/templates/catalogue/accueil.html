@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block title %}BiblioNumérique — Accueil{% endblock %}
+
+{% block content %}
+
+<!-- ░░ HERO ░░ -->
+<section class="bg-[#1a1612] text-[#faf7f2] py-24 px-4 relative overflow-hidden">
+  <div class="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#b5451b]/20 pointer-events-none"></div>
+  <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center relative">
+    <div>
+      <span class="inline-block text-xs font-semibold tracking-widest uppercase text-[#c9a84c] mb-6">
+        Bibliothèque numérique gratuite
+      </span>
+      <h1 class="text-4xl md:text-6xl font-bold leading-tight mb-6">
+        Des milliers de livres,<br>
+        <em class="text-[#c9a84c]">à portée de clic</em>
+      </h1>
+      <p class="text-[#faf7f2]/70 text-lg mb-8 max-w-lg">
+        Accédez à une collection complète de livres en PDF et ePub. Lisez en ligne, suivez votre progression, constituez votre bibliothèque personnelle.
+      </p>
+      <div class="flex gap-4 flex-wrap">
+        <a href="{% url 'catalogue:liste_livres' %}"
+           class="px-6 py-3 rounded-full bg-[#b5451b] text-white font-medium hover:bg-[#962f0e] transition-colors">
+          Explorer le catalogue →
+        </a>
+        {% if not user.is_authenticated %}
+        <a href="{% url 'accounts:inscription' %}"
+           class="px-6 py-3 rounded-full border border-white/30 text-[#faf7f2] hover:border-white hover:bg-white/10 transition-colors">
+          Créer un compte
+        </a>
+        {% endif %}
+      </div>
+
+      <!-- Stats -->
+      <div class="flex gap-8 mt-10">
+        <div>
+          <div class="text-3xl font-bold text-[#c9a84c]" style="font-family:'Playfair Display',serif;">{{ total_livres|default:"0" }}+</div>
+          <div class="text-xs uppercase tracking-widest text-[#faf7f2]/50 mt-1">Livres</div>
+        </div>
+        <div>
+          <div class="text-3xl font-bold text-[#c9a84c]" style="font-family:'Playfair Display',serif;">{{ total_auteurs|default:"0" }}+</div>
+          <div class="text-xs uppercase tracking-widest text-[#faf7f2]/50 mt-1">Auteurs</div>
+        </div>
+        <div>
+          <div class="text-3xl font-bold text-[#c9a84c]" style="font-family:'Playfair Display',serif;">{{ total_utilisateurs|default:"0" }}+</div>
+          <div class="text-xs uppercase tracking-widest text-[#faf7f2]/50 mt-1">Lecteurs</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Livres décoratifs -->
+    <div class="hidden md:grid grid-cols-3 gap-3" style="transform:perspective(800px) rotateY(-8deg)">
+      {% for c in "123456" %}
+      <div class="aspect-[2/3] rounded-sm shadow-2xl animate-pulse"
+           style="animation-delay:{{ forloop.counter0 }}00ms; background:linear-gradient(135deg,
+             {% cycle '#b5451b,#7a2a0e' '#c9a84c,#8a6a20' '#4a6741,#2a4721' '#3a5a7a,#1a3050' '#b5451b,#7a2a0e' '#7a4a6a,#4a1a4a' %})">
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ░░ CATÉGORIES ░░ -->
+<section class="py-20 px-4">
+  <div class="max-w-7xl mx-auto">
+    <div class="flex items-baseline justify-between mb-8 pb-4 border-b border-stone-200">
+      <h2 class="text-2xl italic">Parcourir par catégorie</h2>
+      <a href="{% url 'catalogue:liste_categories' %}" class="text-sm text-[#b5451b] hover:underline">Toutes les catégories →</a>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+      {% for cat in categories %}
+      <a href="{% url 'catalogue:livres_categorie' cat.slug %}"
+         class="bg-white border border-stone-200 rounded-2xl p-4 text-center hover:border-[#b5451b] hover:bg-[#f0ebe0] hover:-translate-y-1 transition-all">
+        <div class="text-3xl mb-2">{{ cat.icone|default:" " }}</div>
+        <div class="font-medium text-sm">{{ cat.nom }}</div>
+        <div class="text-xs text-stone-400 mt-1">{{ cat.livres.count }} livre{{ cat.livres.count|pluralize }}</div>
+      </a>
+      {% empty %}
+      <p class="text-stone-400 col-span-full">Aucune catégorie disponible.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ░░ NOUVEAUTÉS ░░ -->
+<section class="py-20 px-4 bg-[#f0ebe0]">
+  <div class="max-w-7xl mx-auto">
+    <div class="flex items-baseline justify-between mb-8 pb-4 border-b border-stone-200">
+      <h2 class="text-2xl italic">Ajouts récents</h2>
+      <a href="{% url 'catalogue:liste_livres' %}?tri=-date_ajout" class="text-sm text-[#b5451b] hover:underline">Voir tout →</a>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+      {% for livre in livres_recents %}
+        {% include 'catalogue/_book_card.html' %}
+      {% empty %}
+      <p class="text-stone-400 col-span-full">Aucun livre disponible pour l'instant.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ░░ LES PLUS LUS ░░ -->
+<section class="py-20 px-4">
+  <div class="max-w-7xl mx-auto">
+    <div class="flex items-baseline justify-between mb-8 pb-4 border-b border-stone-200">
+      <h2 class="text-2xl italic">Les plus lus</h2>
+      <a href="{% url 'catalogue:liste_livres' %}?tri=-nombre_lectures" class="text-sm text-[#b5451b] hover:underline">Voir tout →</a>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+      {% for livre in livres_populaires %}
+        {% include 'catalogue/_book_card.html' %}
+      {% empty %}
+      <p class="text-stone-400 col-span-full">Aucun livre disponible pour l'instant.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ░░ CTA ░░ -->
+{% if not user.is_authenticated %}
+<section class="py-20 px-4 bg-[#f0ebe0] text-center">
+  <div class="max-w-xl mx-auto">
+    <h2 class="text-3xl italic mb-4">Rejoignez BiblioNumérique</h2>
+    <p class="text-stone-500 mb-8">Créez votre compte gratuit pour suivre votre progression, enregistrer vos favoris et accéder à toutes nos fonctionnalités.</p>
+    <a href="{% url 'accounts:inscription' %}"
+       class="inline-block px-8 py-3 rounded-full bg-[#b5451b] text-white font-medium hover:bg-[#962f0e] transition-colors">
+      Créer mon compte gratuitement
+    </a>
+  </div>
+</section>
+{% endif %}
+
+{% endblock %}

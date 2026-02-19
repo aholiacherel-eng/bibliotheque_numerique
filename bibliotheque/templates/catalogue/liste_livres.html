@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}Catalogue — BiblioNumérique{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-10 flex gap-8">
+
+  <!-- ░░ FILTRES (sidebar) ░░ -->
+  <aside class="hidden lg:block w-60 shrink-0">
+    <div class="sticky top-20">
+      <h3 class="font-semibold text-sm uppercase tracking-wider pb-3 mb-5 border-b-2 border-[#1a1612]">Filtrer</h3>
+      <form method="get" id="filter-form">
+
+        <!-- Catégorie -->
+        <div class="mb-6">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2">Catégorie</label>
+          <select name="categorie" onchange="this.form.submit()"
+                  class="w-full px-3 py-2 border border-stone-200 rounded-lg text-sm bg-white focus:outline-none focus:border-[#b5451b] cursor-pointer">
+            <option value="">Toutes</option>
+            {% for cat in categories %}
+            <option value="{{ cat.slug }}" {% if request.GET.categorie == cat.slug %}selected{% endif %}>{{ cat.nom }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Format -->
+        <div class="mb-6">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2">Format</label>
+          <div class="flex flex-wrap gap-2">
+            <button type="submit" name="format" value=""
+                    class="px-3 py-1.5 text-xs rounded-full border transition-colors {% if not request.GET.format %}bg-[#b5451b] text-white border-[#b5451b]{% else %}border-stone-200 hover:border-[#b5451b]{% endif %}">Tous</button>
+            <button type="submit" name="format" value="pdf"
+                    class="px-3 py-1.5 text-xs rounded-full border transition-colors {% if request.GET.format == 'pdf' %}bg-[#b5451b] text-white border-[#b5451b]{% else %}border-stone-200 hover:border-[#b5451b]{% endif %}">PDF</button>
+            <button type="submit" name="format" value="epub"
+                    class="px-3 py-1.5 text-xs rounded-full border transition-colors {% if request.GET.format == 'epub' %}bg-[#b5451b] text-white border-[#b5451b]{% else %}border-stone-200 hover:border-[#b5451b]{% endif %}">ePub</button>
+            <button type="submit" name="format" value="mobi"
+                    class="px-3 py-1.5 text-xs rounded-full border transition-colors {% if request.GET.format == 'mobi' %}bg-[#b5451b] text-white border-[#b5451b]{% else %}border-stone-200 hover:border-[#b5451b]{% endif %}">Mobi</button>
+          </div>
+        </div>
+
+        <!-- Tri -->
+        <div class="mb-6">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2">Trier par</label>
+          <select name="tri" onchange="this.form.submit()"
+                  class="w-full px-3 py-2 border border-stone-200 rounded-lg text-sm bg-white focus:outline-none focus:border-[#b5451b] cursor-pointer">
+            <option value="-date_ajout"       {% if request.GET.tri == '-date_ajout'       %}selected{% endif %}>Plus récents</option>
+            <option value="-nombre_lectures"  {% if request.GET.tri == '-nombre_lectures'  %}selected{% endif %}>Plus lus</option>
+            <option value="titre"             {% if request.GET.tri == 'titre'             %}selected{% endif %}>Titre A→Z</option>
+            <option value="-date_publication" {% if request.GET.tri == '-date_publication' %}selected{% endif %}>Date publication</option>
+          </select>
+        </div>
+
+      </form>
+    </div>
+  </aside>
+
+  <!-- ░░ RÉSULTATS ░░ -->
+  <div class="flex-1 min-w-0">
+    <div class="flex items-center justify-between mb-6 pb-4 border-b border-stone-200">
+      <span class="text-sm text-stone-400">
+        <strong class="text-[#1a1612]">{{ livres.paginator.count }}</strong>
+        livre{{ livres.paginator.count|pluralize }} trouvé{{ livres.paginator.count|pluralize }}
+      </span>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-6">
+      {% for livre in livres %}
+        {% include 'catalogue/_book_card.html' %}
+      {% empty %}
+      <div class="col-span-full text-center py-20 text-stone-400">
+        <p class="text-5xl mb-4"></p>
+        <p>Aucun livre ne correspond aux filtres sélectionnés.</p>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if livres.has_other_pages %}
+    <nav class="flex justify-center gap-2 mt-12">
+      {% if livres.has_previous %}
+      <a href="?page={{ livres.previous_page_number }}&{{ request.GET.urlencode }}"
+         class="w-10 h-10 flex items-center justify-center border border-stone-200 rounded-lg text-sm hover:border-[#b5451b] hover:text-[#b5451b] transition-colors">←</a>
+      {% endif %}
+      {% for num in livres.paginator.page_range %}
+        {% if livres.number == num %}
+        <span class="w-10 h-10 flex items-center justify-center bg-[#b5451b] text-white rounded-lg text-sm">{{ num }}</span>
+        {% elif num > livres.number|add:'-3' and num < livres.number|add:'3' %}
+        <a href="?page={{ num }}&{{ request.GET.urlencode }}"
+           class="w-10 h-10 flex items-center justify-center border border-stone-200 rounded-lg text-sm hover:border-[#b5451b] hover:text-[#b5451b] transition-colors">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if livres.has_next %}
+      <a href="?page={{ livres.next_page_number }}&{{ request.GET.urlencode }}"
+         class="w-10 h-10 flex items-center justify-center border border-stone-200 rounded-lg text-sm hover:border-[#b5451b] hover:text-[#b5451b] transition-colors">→</a>
+      {% endif %}
+    </nav>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

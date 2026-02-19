@@ -1,0 +1,51 @@
+{% extends 'base.html' %} 
+{% block title %}Catégories — BiblioNumérique{%endblock %} {% block content %}
+<div class="max-w-7xl mx-auto px-4 py-10">
+  <div
+    class="flex items-baseline justify-between mb-8 pb-4 border-b border-stone-200"
+  >
+    <h1 class="text-3xl italic">Toutes les catégories</h1>
+    <span class="text-sm text-stone-400"
+      >{{ categories.count }} catégorie{{ categories.count|pluralize }}</span
+    >
+  </div>
+
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+    {% for cat in categories %}
+    <div
+      class="bg-white border border-stone-200 rounded-2xl p-6 hover:border-[#b5451b] hover:-translate-y-1 transition-all"
+    >
+      <a href="{% url 'catalogue:livres_categorie' cat.slug %}" class="block">
+        <div class="text-4xl mb-3">{{ cat.icone|default:"" }}</div>
+        <div class="font-semibold text-base mb-1">{{ cat.nom }}</div>
+        <div class="text-sm text-stone-400 mb-3">
+          {{ cat.livres.count }} livre{{ cat.livres.count|pluralize }}
+        </div>
+        {% if cat.description %}
+        <p class="text-xs text-stone-400 line-clamp-2">{{ cat.description }}</p>
+        {% endif %}
+      </a>
+
+      <!-- Sous-catégories -->
+      {% if cat.sous_categories.exists %}
+      <div class="mt-4 pt-4 border-t border-stone-100 flex flex-wrap gap-1">
+        {% for sous in cat.sous_categories.all %}
+        <a
+          href="{% url 'catalogue:livres_categorie' sous.slug %}"
+          class="px-2 py-1 text-xs rounded-full bg-[#f0ebe0] text-stone-500 hover:bg-[#b5451b] hover:text-white transition-colors"
+        >
+          {{ sous.nom }}
+        </a>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="col-span-full text-center py-16 text-stone-400">
+      <p class="text-5xl mb-4"></p>
+      <p>Aucune catégorie disponible pour l'instant.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

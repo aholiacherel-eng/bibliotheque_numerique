@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Auteurs — BiblioNumérique{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-10">
+
+  <div class="flex items-baseline justify-between mb-8 pb-4 border-b border-stone-200">
+    <h1 class="text-3xl italic">Nos auteurs</h1>
+    <span class="text-sm text-stone-400">{{ auteurs.count }} auteur{{ auteurs.count|pluralize }}</span>
+  </div>
+
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+    {% for auteur in auteurs %}
+    <a href="{% url 'catalogue:detail_auteur' auteur.slug %}"
+       class="group bg-white border border-stone-200 rounded-2xl p-5 text-center hover:border-[#b5451b] hover:-translate-y-1 transition-all">
+      <div class="w-16 h-16 rounded-full mx-auto mb-3 overflow-hidden bg-[#f0ebe0] flex items-center justify-center">
+        {% if auteur.photo %}
+          <img src="{{ auteur.photo.url }}" alt="{{ auteur.nom_complet }}" class="w-full h-full object-cover" />
+        {% else %}
+          <span class="text-2xl font-bold text-stone-400" style="font-family:'Playfair Display',serif;">
+            {{ auteur.prenom|first }}{{ auteur.nom|first }}
+          </span>
+        {% endif %}
+      </div>
+      <div class="font-semibold text-sm group-hover:text-[#b5451b] transition-colors">{{ auteur.nom_complet }}</div>
+      {% if auteur.nationalite %}<div class="text-xs text-stone-400 mt-1">{{ auteur.nationalite }}</div>{% endif %}
+      <div class="text-xs text-stone-400 mt-1">{{ auteur.livres.count }} livre{{ auteur.livres.count|pluralize }}</div>
+    </a>
+    {% empty %}
+    <div class="col-span-full text-center py-16 text-stone-400">
+      <p class="text-5xl mb-4"></p>
+      <p>Aucun auteur disponible pour l'instant.</p>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Connexion — BiblioNumérique{% endblock %}
+
+{% block content %}
+<div class="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-[#f0ebe0] px-4 py-12">
+  <div class="bg-white border border-stone-200 rounded-3xl p-8 w-full max-w-md shadow-xl">
+    <h1 class="text-3xl italic mb-1">Bon retour,<br><em class="text-[#b5451b]">lecteur</em></h1>
+    <p class="text-stone-400 text-sm mb-8">Connectez-vous pour accéder à votre bibliothèque.</p>
+
+    {% if form.errors %}
+    <div class="bg-red-50 border-l-4 border-[#b5451b] text-red-800 text-sm px-4 py-3 rounded-lg mb-6">
+      Identifiants incorrects. Veuillez réessayer.
+    </div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}" />
+
+      <div class="mb-5">
+        <label for="id_username" class="block text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2">Nom d'utilisateur</label>
+        <input type="text" name="username" id="id_username" autofocus required
+               class="w-full px-4 py-2.5 border border-stone-200 rounded-xl text-sm bg-[#faf7f2] focus:outline-none focus:border-[#b5451b] transition-colors" />
+      </div>
+
+      <div class="mb-6">
+        <label for="id_password" class="block text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2">Mot de passe</label>
+        <input type="password" name="password" id="id_password" required
+               class="w-full px-4 py-2.5 border border-stone-200 rounded-xl text-sm bg-[#faf7f2] focus:outline-none focus:border-[#b5451b] transition-colors" />
+      </div>
+
+      <button type="submit"
+              class="w-full py-3 rounded-full bg-[#b5451b] text-white font-medium hover:bg-[#962f0e] transition-colors">
+        Se connecter →
+      </button>
+    </form>
+
+    <p class="text-center text-sm text-stone-400 mt-6">
+      Pas encore inscrit ?
+      <a href="{% url 'accounts:inscription' %}" class="text-[#b5451b] font-medium hover:underline">Créer un compte</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

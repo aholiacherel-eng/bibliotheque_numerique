@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Page introuvable — BiblioNumérique{% endblock %}
+
+{% block content %}
+<div class="min-h-[60vh] flex flex-col items-center justify-center px-4 text-center">
+  <div class="text-8xl font-bold text-stone-100" style="font-family:'Playfair Display',serif;">404</div>
+  <h1 class="text-3xl italic mt-4 mb-3">Page introuvable</h1>
+  <p class="text-stone-400 mb-8 max-w-md">
+    Cette page n'existe pas ou a été déplacée. Retournez à l'accueil pour continuer votre lecture.
+  </p>
+  <div class="flex gap-4">
+    <a href="{% url 'catalogue:accueil' %}"
+       class="px-6 py-3 rounded-full bg-[#b5451b] text-white font-medium hover:bg-[#962f0e] transition-colors">
+      ← Retour à l'accueil
+    </a>
+    <a href="{% url 'catalogue:liste_livres' %}"
+       class="px-6 py-3 rounded-full border border-stone-200 text-sm hover:border-[#b5451b] hover:text-[#b5451b] transition-colors">
+      Explorer le catalogue
+    </a>
+  </div>
+</div>
+{% endblock %}

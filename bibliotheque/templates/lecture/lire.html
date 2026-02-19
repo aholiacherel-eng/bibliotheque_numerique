@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Lire : {{ livre.titre }}{% endblock %}
+
+{% block extra_css %}
+<style>body,main{overflow:hidden;height:100vh;}</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex h-[calc(100vh-4rem)]">
+
+  <!-- ░░ LECTEUR PRINCIPAL ░░ -->
+  <div class="flex-1 bg-[#1a1612] flex flex-col relative min-w-0">
+
+    <!-- Zone de lecture -->
+    <div class="flex-1 overflow-hidden flex items-center justify-center">
+      {% if livre.format == 'pdf' %}
+      <canvas id="pdf-canvas" class="max-h-full max-w-full"></canvas>
+      {% else %}
+      <div id="epub-viewer" class="w-full h-full overflow-auto bg-white"></div>
+      {% endif %}
+    </div>
+
+    <!-- Barre de contrôle -->
+    <div class="h-14 bg-[#1a1612]/90 backdrop-blur flex items-center gap-4 px-6 border-t border-white/10">
+      <button id="btn-prev" class="text-white/70 hover:text-[#c9a84c] transition-colors text-lg">←</button>
+
+      <div class="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
+        <div id="progress-bar" class="h-full bg-[#b5451b] rounded-full transition-all"
+             style="width:{{ progression.pourcentage|floatformat:1 }}%;"></div>
+      </div>
+
+      <span class="text-white/50 text-xs whitespace-nowrap">
+        Page <span id="page-current">{{ progression.page_courante }}</span>
+        {% if livre.nombre_pages %}/ {{ livre.nombre_pages }}{% endif %}
+      </span>
+
+      <button id="btn-next"    class="text-white/70 hover:text-[#c9a84c] transition-colors text-lg">→</button>
+      <button id="btn-signet"  class="text-white/70 hover:text-[#c9a84c] transition-colors" title="Signet">🔖</button>
+      <button id="btn-favori"  class="text-white/70 hover:text-[#c9a84c] transition-colors"
+              data-url="{% url 'lecture:toggle_favori' livre.slug %}">🤍</button>
+      <button id="btn-sidebar" class="text-white/70 hover:text-[#c9a84c] transition-colors">☰</button>
+    </div>
+  </div>
+
+  <!-- ░░ PANNEAU LATÉRAL ░░ -->
+  <div id="reader-sidebar"
+       class="w-72 bg-white border-l border-stone-200 flex flex-col transition-all duration-300">
+    <div class="px-5 py-4 border-b border-stone-100 font-semibold text-sm truncate"
+         style="font-family:'Playfair Display',serif;">
+      {{ livre.titre }}
+    </div>
+
+    <!-- Onglets -->
+    <div class="flex border-b border-stone-100">
+      <button class="sidebar-tab flex-1 py-2.5 text-xs font-medium text-[#b5451b] border-b-2 border-[#b5451b]" data-tab="signets">Signets</button>
+      <button class="sidebar-tab flex-1 py-2.5 text-xs font-medium text-stone-400 hover:text-[#b5451b] transition-colors" data-tab="infos">Infos</button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-4">
+
+      <!-- Onglet signets -->
+      <div id="tab-signets">
+        <!-- Formulaire signet (caché par défaut) -->
+        <form id="signet-form" method="post"
+              action="{% url 'lecture:ajouter_signet' livre.slug %}"
+              class="hidden mb-4 bg-[#faf7f2] rounded-xl p-4 border border-stone-200">
+          {% csrf_token %}
+          <input type="hidden" name="page" id="signet-page" value="{{ progression.page_courante }}" />
+          <div class="mb-3">
+            <label class="block text-xs uppercase tracking-wider text-stone-400 mb-1">Titre</label>
+            <input type="text" name="titre" placeholder="Ma remarque…"
+                   class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:border-[#b5451b]" />
+          </div>
+          <div class="mb-3">
+            <label class="block text-xs uppercase tracking-wider text-stone-400 mb-1">Note</label>
+            <textarea name="note" rows="2"
+                      class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg resize-none focus:outline-none focus:border-[#b5451b]"></textarea>
+          </div>
+          <div class="flex gap-2">
+            <button type="submit"
+                    class="flex-1 py-2 rounded-lg bg-[#b5451b] text-white text-xs font-medium hover:bg-[#962f0e] transition-colors">
+              Enregistrer
+            </button>
+            <button type="button" id="cancel-signet"
+                    class="px-4 py-2 rounded-lg border border-stone-200 text-xs text-stone-500 hover:bg-stone-50">
+              Annuler
+            </button>
+          </div>
+        </form>
+
+        <!-- Liste signets -->
+        {% for s in signets %}
+        <div class="p-3 border border-stone-100 rounded-xl mb-2 cursor-pointer hover:bg-[#f0ebe0] transition-colors"
+             onclick="goToPage({{ s.page }})">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-[#b5451b] mb-1">Page {{ s.page }}</div>
+          <div class="text-sm font-medium">{{ s.titre|default:"Signet" }}</div>
+          {% if s.note %}<div class="text-xs text-stone-400 mt-1">{{ s.note }}</div>{% endif %}
+        </div>
+        {% empty %}
+        <p class="text-center text-stone-400 text-sm mt-8">
+          Aucun signet.<br>
+          <span class="text-xs">Cliquez sur 🔖 pour en ajouter.</span>
+        </p>
+        {% endfor %}
+      </div>
+
+      <!-- Onglet infos -->
+      <div id="tab-infos" class="hidden text-sm space-y-4">
+        <div>
+          <div class="text-xs uppercase tracking-wider text-stone-400 mb-1">Auteur(s)</div>
+          <div class="font-medium">{{ livre.auteurs_str }}</div>
+        </div>
+        {% if livre.nombre_pages %}
+        <div>
+          <div class="text-xs uppercase tracking-wider text-stone-400 mb-1">Pages</div>
+          <div class="font-medium">{{ livre.nombre_pages }}</div>
+        </div>
+        {% endif %}
+        <div>
+          <div class="text-xs uppercase tracking-wider text-stone-400 mb-1">Progression</div>
+          <div class="font-bold text-[#b5451b]">{{ progression.pourcentage|floatformat:1 }}%</div>
+        </div>
+        <a href="{% url 'catalogue:detail_livre' livre.slug %}"
+           class="inline-block px-4 py-2 rounded-full border border-stone-200 text-xs hover:border-[#b5451b] hover:text-[#b5451b] transition-colors">
+          ← Fiche du livre
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const SLUG = '{{ livre.slug }}';
+const NB_PAGES = {{ livre.nombre_pages|default:0 }};
+let currentPage = {{ progression.page_courante }};
+
+// Sidebar toggle
+document.getElementById('btn-sidebar').addEventListener('click', () => {
+  document.getElementById('reader-sidebar').classList.toggle('hidden');
+});
+
+// Signet form toggle
+document.getElementById('btn-signet').addEventListener('click', () => {
+  const f = document.getElementById('signet-form');
+  document.getElementById('signet-page').value = currentPage;
+  f.classList.toggle('hidden');
+});
+document.getElementById('cancel-signet').addEventListener('click', () => {
+  document.getElementById('signet-form').classList.add('hidden');
+});
+
+// Tabs
+document.querySelectorAll('.sidebar-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.sidebar-tab').forEach(t => {
+      t.classList.remove('text-[#b5451b]', 'border-b-2', 'border-[#b5451b]');
+      t.classList.add('text-stone-400');
+    });
+    tab.classList.add('text-[#b5451b]', 'border-b-2', 'border-[#b5451b]');
+    tab.classList.remove('text-stone-400');
+    document.getElementById('tab-signets').classList.add('hidden');
+    document.getElementById('tab-infos').classList.add('hidden');
+    document.getElementById(`tab-${tab.dataset.tab}`).classList.remove('hidden');
+  });
+});
+
+// Favori toggle
+document.getElementById('btn-favori').addEventListener('click', async function() {
+  const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+  const res  = await fetch(this.dataset.url, { method:'POST', headers:{'X-CSRFToken': csrf} });
+  const data = await res.json();
+  this.textContent = data.statut === 'ajoute' ? '❤️' : '🤍';
+});
+
+function updateUI(page) {
+  document.getElementById('page-current').textContent = page;
+  const pct = NB_PAGES ? (page / NB_PAGES * 100) : 0;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  currentPage = page;
+}
+</script>
+{% endblock %}
+
+{% block extra_js %}
+{% if livre.format == 'pdf' %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const canvas = document.getElementById('pdf-canvas');
+const ctx    = canvas.getContext('2d');
+let pdfDoc   = null;
+
+async function renderPage(num) {
+  const page     = await pdfDoc.getPage(num);
+  const viewport = page.getViewport({ scale: 1.4 });
+  canvas.height  = viewport.height;
+  canvas.width   = viewport.width;
+  await page.render({ canvasContext: ctx, viewport }).promise;
+  updateUI(num);
+  if (num % 3 === 0 || num === pdfDoc.numPages) window.majProgression(SLUG, num);
+}
+
+pdfjsLib.getDocument('{{ livre.fichier.url }}').promise.then(doc => {
+  pdfDoc = doc; renderPage(currentPage);
+});
+
+function goToPage(n) { if (n >= 1 && n <= pdfDoc.numPages) renderPage(n); }
+document.getElementById('btn-prev').addEventListener('click', () => goToPage(currentPage - 1));
+document.getElementById('btn-next').addEventListener('click', () => goToPage(currentPage + 1));
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goToPage(currentPage + 1);
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goToPage(currentPage - 1);
+});
+</script>
+
+{% else %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/epub.js/0.3.93/epub.min.js"></script>
+<script>
+const book      = ePub('{{ livre.fichier.url }}');
+const rendition = book.renderTo('epub-viewer', { width:'100%', height:'100%' });
+rendition.display();
+function goToPage(n) {}
+document.getElementById('btn-prev').addEventListener('click', () => rendition.prev());
+document.getElementById('btn-next').addEventListener('click', () => rendition.next());
+</script>
+{% endif %}
+{% endblock %}
