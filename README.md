@@ -30,7 +30,7 @@ bibliotheque/
 │   └── recherche/    # Recherche full-text + AJAX
 ├── templates/        # HTML avec Tailwind CSS
 ├── static/           # JS, CSS
-└── seed.sql          # Données initiales (55 livres, 29 auteurs)
+
 ```
 
 ## Vu
